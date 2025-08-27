@@ -33,12 +33,13 @@ class VLLMBenchmark:
     """Async concurrent benchmark for vLLM servers."""
 
     def __init__(
-        self, model: str, port: int, prompt: str = "100 word story about balloons"
+        self, model: str, port: int, server: str = "127.0.0.1", prompt: str = "100 word story about balloons"
     ):
         self.model = model
         self.port = port
+        self.server = server
         self.prompt = prompt
-        self.url = f"http://127.0.0.1:{port}/v1/completions"
+        self.url = f"http://{server}:{port}/v1/completions"
         self.metrics: List[RequestMetrics] = []
 
     async def single_request(
@@ -255,6 +256,7 @@ Examples:
     )
     parser.add_argument("-m", "--model", help="Model name to use")
     parser.add_argument("-p", "--port", type=int, help="Port number")
+    parser.add_argument("-s", "--server", default="127.0.0.1", help="Server IP address (default: 127.0.0.1)")
     parser.add_argument(
         "--prompt",
         default="100 word story about balloons",
@@ -298,13 +300,13 @@ Examples:
                 print("Invalid selection", file=sys.stderr)
                 sys.exit(1)
 
-    print(f"Using model: {model} on port {port}")
+    print(f"Using model: {model} on server {args.server}:{port}")
 
     # Parse concurrency levels
     concurrency_levels = [int(c.strip()) for c in args.concurrency.split(",")]
 
     # Create benchmark instance
-    benchmark = VLLMBenchmark(model, port, args.prompt)
+    benchmark = VLLMBenchmark(model, port, args.server, args.prompt)
 
     # Run benchmark
     while True:

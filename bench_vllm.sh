@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks bench_vllm.sh"  
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v5"
+echo "Script Version: 2025-01-27-v6"
 echo "=================================="
 echo
 
@@ -212,122 +212,31 @@ echo
 ########################################
 # Run the Python benchmark
 ########################################
-python3 - <<EOF
-import asyncio
-import aiohttp
-import random
-import time
-import statistics
-import sys
-from typing import List, Dict, Any
 
-async def single_request(session: aiohttp.ClientSession, url: str, payload: Dict[str, Any]) -> Dict[str, float]:
-    """Execute a single completion request and return timing metrics."""
-    start = time.time()
-    first_token_time = None
-    tokens = 0
-    
-    try:
-        async with session.post(url, json=payload) as resp:
-            if resp.status != 200:
-                print(f"HTTP {resp.status}: {await resp.text()}", file=sys.stderr)
-                return {"error": 1}
-            
-            async for chunk in resp.content:
-                if not chunk.strip():
-                    continue
-                if first_token_time is None:
-                    first_token_time = time.time()
-                tokens += 1
-    except Exception as e:
-        print(f"Request failed: {e}", file=sys.stderr)
-        return {"error": 1}
-    
-    total_time = time.time() - start
-    ttft = first_token_time - start if first_token_time else 0
-    
-    return {
-        "ttft": ttft,
-        "total_time": total_time,
-        "tokens": tokens,
-        "tps": tokens / total_time if total_time > 0 else 0
-    }
+# Check if bench_vllm_async.py exists locally
+if [[ -f bench_vllm_async.py ]]; then
+    # Use the local file
+    BENCH_SCRIPT="bench_vllm_async.py"
+else
+    # Download it if we don't have it (e.g., when running via curl)
+    echo "Downloading benchmark script..."
+    curl -s -o bench_vllm_async.py "https://raw.githubusercontent.com/sirouk/sn19-benchmarks/main/bench_vllm_async.py"
+    BENCH_SCRIPT="bench_vllm_async.py"
+fi
 
-async def concurrent_benchmark(concurrency: int, num_requests: int) -> List[Dict[str, float]]:
-    """Run multiple concurrent requests and collect metrics."""
-    url = "http://${SERVER_IP}:${PORT}/v1/completions"
-    
-    async with aiohttp.ClientSession() as session:
-        tasks = []
-        for _ in range(num_requests):
-            payload = {
-                "model": "${TEST_MODEL}",
-                "prompt": "100 word story about balloons",
-                "temperature": 0.0,
-                "stream": True,
-                "seed": random.randint(1, 1_000_000),
-            }
-            tasks.append(single_request(session, url, payload))
-        
-        # TRUE ASYNC CONCURRENCY: limit concurrent requests
-        semaphore = asyncio.Semaphore(concurrency)
-        
-        async def limited_request(coro):
-            async with semaphore:
-                return await coro
-        
-        limited_tasks = [limited_request(task) for task in tasks]
-        results = await asyncio.gather(*limited_tasks)
-    
-    return [r for r in results if "error" not in r]
+# Build command line arguments
+BENCH_ARGS="-m \"${TEST_MODEL}\" -p ${PORT} -s ${SERVER_IP}"
 
-async def main():
-    # Parse concurrency levels
-    concurrency_str = "${USER_CONCURRENCY:-}"
-    if concurrency_str:
-        concurrency_levels = [int(concurrency_str)]
-    else:
-        concurrency_levels = [1, 5, 10, 20]
-    
-    for concurrency in concurrency_levels:
-        print(f"\n{'='*50}")
-        print(f"Testing with concurrency level: {concurrency}")
-        print(f"{'='*50}")
-        
-        all_results = []
-        
-        for run in range(1, 4):
-            print(f"\nRun {run}/3:")
-            start_time = time.time()
-            
-            # Run concurrent requests
-            results = await concurrent_benchmark(concurrency, concurrency)
-            
-            batch_time = time.time() - start_time
-            
-            if results:
-                ttfts = [r["ttft"] for r in results]
-                total_times = [r["total_time"] for r in results]
-                tps_values = [r["tps"] for r in results]
-                
-                print(f"  Batch completed in {batch_time:.2f}s")
-                print(f"  TTFT: min={min(ttfts):.3f}s, median={statistics.median(ttfts):.3f}s, max={max(ttfts):.3f}s")
-                print(f"  Total: min={min(total_times):.3f}s, median={statistics.median(total_times):.3f}s, max={max(total_times):.3f}s")
-                print(f"  TPS: min={min(tps_values):.1f}, median={statistics.median(tps_values):.1f}, max={max(tps_values):.1f}")
-                
-                all_results.extend(results)
-        
-        # Aggregate statistics
-        if all_results:
-            print(f"\nAggregate stats for concurrency={concurrency}:")
-            ttfts = [r["ttft"] for r in all_results]
-            tps_values = [r["tps"] for r in all_results]
-            print(f"  TTFT p50: {statistics.median(ttfts):.3f}s, p95: {statistics.quantiles(ttfts, n=20)[18]:.3f}s")
-            print(f"  TPS p50: {statistics.median(tps_values):.1f}, p95: {statistics.quantiles(tps_values, n=20)[18]:.1f}")
+# Add concurrency if specified
+if [[ -n "${USER_CONCURRENCY:-}" ]]; then
+    BENCH_ARGS="$BENCH_ARGS -c ${USER_CONCURRENCY}"
+else
+    BENCH_ARGS="$BENCH_ARGS -c 1,5,10,20"
+fi
 
-if __name__ == "__main__":
-    asyncio.run(main())
-EOF
+# Run the benchmark
+echo "Running: python3 $BENCH_SCRIPT $BENCH_ARGS"
+python3 "$BENCH_SCRIPT" $BENCH_ARGS
 } # End of run_benchmark function
 
 ########################################
