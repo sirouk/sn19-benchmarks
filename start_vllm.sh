@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks start_vllm.sh"
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v5"
+echo "Script Version: 2025-01-27-v4"
 echo "=================================="
 echo
 
@@ -105,34 +105,35 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 
 # Install vLLM requirements
-wget -O vllm_requirements.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/common.txt
-uv pip install -r vllm_requirements.txt
+wget -O vllm_requirements_common.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/common.txt
+uv pip install -r vllm_requirements_common.txt
+
+# If Darwin then install cpu.txt
+if [[ "$(uname)" == "Darwin" ]]; then
+    wget -O vllm_requirements_cpu.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cpu.txt
+    uv pip install -r vllm_requirements_cpu.txt
+else
+    wget -O vllm_requirements_cuda.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cuda.txt
+    uv pip install -r vllm_requirements_cuda.txt
+fi
+
+# If rocm-smi exists, install rocm-torch
+if command -v rocm-smi &> /dev/null; then
+    wget -O vllm_requirements_rocm.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/rocm.txt
+    uv pip install -r vllm_requirements_rocm.txt
+fi
+
+# Transformers with vLLM 0.9.2
+if [ $VLLM_VERSION == "v0.9.2" ]; then
+    uv pip install transformers==4.53.3
+fi
 
 # Get architecture or default to auto, install accordingly
 CUDA_ARCH=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | tr -d '.' || echo "0")
 uv pip install vllm==${VLLM_VERSION} --torch-backend=$([[ "$CUDA_ARCH" -ge 90 ]] && echo "cu128" || echo "auto")
 
-# Fix torch/torchvision compatibility AFTER vLLM installation
-if [ $VLLM_VERSION == "v0.9.2" ]; then
-    echo "Fixing torch/torchvision compatibility for vLLM 0.9.2..."
-    # Reinstall torchvision with compatible version, keeping existing torch
-    # Check if CUDA is available for proper index URL
-    if [[ "$CUDA_ARCH" -gt 0 ]]; then
-        echo "Installing CUDA-compatible torchvision..."
-        uv pip install --force-reinstall torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
-    else
-        echo "Installing CPU-compatible torchvision..."
-        uv pip install --force-reinstall torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
-    fi
-    # Install transformers after fixing torch/torchvision
-    uv pip install transformers==4.53.3
-fi
-
-# Verify vLLM installation and key dependencies
-echo
-echo "Verifying installation..."
-uv pip freeze | grep -E "(vllm|torch|torchvision|transformers)" | sort
-echo
+# Verify vLLM installation
+uv pip freeze | grep vllm
 
 
 # Calculate memory in GB with percentage applied
@@ -200,14 +201,4 @@ else
 fi
 
 echo "Starting vLLM server on port $PORT with model $MODEL_ARGS and args $COMMON_ARGS"
-
-# Quick test to ensure torch/torchvision are working before launching
-echo "Testing torch/torchvision compatibility..."
-python3 -c "import torch; import torchvision; print(f'torch: {torch.__version__}, torchvision: {torchvision.__version__}')" || {
-    echo "ERROR: Torch/torchvision compatibility issue detected!"
-    echo "Attempting to fix..."
-    uv pip install --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu124
-    python3 -c "import torch; import torchvision; print(f'Fixed - torch: {torch.__version__}, torchvision: {torchvision.__version__}')"
-}
-
 python3 -m vllm.entrypoints.openai.api_server $MODEL_ARGS $COMMON_ARGS
