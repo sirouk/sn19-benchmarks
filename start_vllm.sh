@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks start_vllm.sh"
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v3"
+echo "Script Version: 2025-01-27-v4"
 echo "=================================="
 echo
 
@@ -86,11 +86,17 @@ echo "Current git commit: $(git rev-parse --short HEAD)"
 echo "Commit date: $(git log -1 --format=%ci)"
 echo
 
+# Always ensure uv is in PATH (it installs to ~/.local/bin)
+export PATH="$HOME/.local/bin:$PATH"
+
+# Install uv if not present
+if ! command -v uv &> /dev/null; then
+    echo "Installing uv package manager..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
 # keep it fresh
 rm -rf .venv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# Source the uv environment instead of .bashrc
-export PATH="$HOME/.local/bin:$PATH"
 uv self update
 uv venv --python 3.12 --seed
 source .venv/bin/activate

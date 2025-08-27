@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks bench_vllm.sh"  
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v2"
+echo "Script Version: 2025-01-27-v3"
 echo "=================================="
 echo
 
@@ -56,11 +56,13 @@ setup_environment() {
     # Setup fresh environment if needed
     echo "Installing dependencies..."
     
+    # Always ensure uv is in PATH (it installs to ~/.local/bin)
+    export PATH="$HOME/.local/bin:$PATH"
+    
     # Install uv if not present
     if ! command -v uv &> /dev/null; then
+        echo "Installing uv package manager..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        # Source the uv environment instead of .bashrc
-        export PATH="$HOME/.local/bin:$PATH"
     fi
     
     # Create venv if it doesn't exist
