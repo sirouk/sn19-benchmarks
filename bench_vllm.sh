@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks bench_vllm.sh"  
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v6"
+echo "Script Version: 2025-01-27-v7"
 echo "=================================="
 echo
 
@@ -225,18 +225,18 @@ else
 fi
 
 # Build command line arguments
-BENCH_ARGS="-m \"${TEST_MODEL}\" -p ${PORT} -s ${SERVER_IP}"
+# Note: Don't quote the model name in BENCH_ARGS, let the array handle it properly
 
 # Add concurrency if specified
 if [[ -n "${USER_CONCURRENCY:-}" ]]; then
-    BENCH_ARGS="$BENCH_ARGS -c ${USER_CONCURRENCY}"
+    CONCURRENCY_ARG="${USER_CONCURRENCY}"
 else
-    BENCH_ARGS="$BENCH_ARGS -c 1,5,10,20"
+    CONCURRENCY_ARG="1,5,10,20"
 fi
 
-# Run the benchmark
-echo "Running: python3 $BENCH_SCRIPT $BENCH_ARGS"
-python3 "$BENCH_SCRIPT" $BENCH_ARGS
+# Run the benchmark with proper argument handling
+echo "Running: python3 $BENCH_SCRIPT -m '${TEST_MODEL}' -p ${PORT} -s ${SERVER_IP} -c ${CONCURRENCY_ARG}"
+python3 "$BENCH_SCRIPT" -m "${TEST_MODEL}" -p "${PORT}" -s "${SERVER_IP}" -c "${CONCURRENCY_ARG}"
 } # End of run_benchmark function
 
 ########################################
