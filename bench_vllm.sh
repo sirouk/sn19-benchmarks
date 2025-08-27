@@ -46,7 +46,8 @@ setup_environment() {
     # Install uv if not present
     if ! command -v uv &> /dev/null; then
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        . $HOME/.bashrc
+        # Source the uv environment instead of .bashrc
+        export PATH="$HOME/.local/bin:$PATH"
     fi
     
     # Create venv if it doesn't exist

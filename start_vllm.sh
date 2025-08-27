@@ -47,7 +47,8 @@ fi
 # keep it fresh
 rm -rf .venv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-. $HOME/.bashrc
+# Source the uv environment instead of .bashrc
+export PATH="$HOME/.local/bin:$PATH"
 uv self update
 uv venv --python 3.12 --seed
 source .venv/bin/activate
