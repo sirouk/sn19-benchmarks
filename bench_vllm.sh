@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks bench_vllm.sh"  
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v4"
+echo "Script Version: 2025-01-27-v5"
 echo "=================================="
 echo
 
@@ -151,24 +151,21 @@ detect_local_servers() {
 }
 
 ########################################
-# Main execution
+# Run benchmark function
 ########################################
+run_benchmark() {
+    # Parse command line arguments (for backward compatibility)
+    USER_CONCURRENCY="${1:-}"
+    ORD_INPUT="${2:-}"
 
-# Setup environment first
-setup_environment
-
-# Parse command line arguments (for backward compatibility)
-USER_CONCURRENCY="${1:-}"
-ORD_INPUT="${2:-}"
-
-# Check if we should auto-detect local servers or prompt for remote
-echo "Benchmark Configuration"
-echo "======================"
-echo "1) Auto-detect local vLLM servers"
-echo "2) Connect to remote/specific server"
-echo
-read -p "Select option [1-2] (defaults to 1): " CONFIG_OPTION
-CONFIG_OPTION=${CONFIG_OPTION:-1}
+    # Check if we should auto-detect local servers or prompt for remote
+    echo "Benchmark Configuration"
+    echo "======================"
+    echo "1) Auto-detect local vLLM servers"
+    echo "2) Connect to remote/specific server"
+    echo
+    read -p "Select option [1-2] (defaults to 1): " CONFIG_OPTION
+    CONFIG_OPTION=${CONFIG_OPTION:-1}
 
 if [[ "$CONFIG_OPTION" == "1" ]]; then
     # Auto-detect local servers
@@ -331,7 +328,23 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 EOF
+} # End of run_benchmark function
 
-echo
-read -n1 -rsp "Run again? [y/N] " ans; echo
-[[ $ans == [yY] ]] && exec "$0" "$@"
+########################################
+# Main execution
+########################################
+
+# Setup environment first
+setup_environment
+
+# Run benchmark in a loop
+while true; do
+    run_benchmark "$@"
+    
+    echo
+    read -n1 -rsp "Run again? [y/N] " ans; echo
+    if [[ $ans != [yY] ]]; then
+        break
+    fi
+    echo  # Add spacing before next run
+done
