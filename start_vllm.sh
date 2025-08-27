@@ -204,5 +204,7 @@ else
     exit 1
 fi
 
-echo "Starting vLLM server on port $PORT with model $MODEL_ARGS and args $COMMON_ARGS"
-python3 -m vllm.entrypoints.openai.api_server $MODEL_ARGS $COMMON_ARGS
+
+CMD="python3 -m vllm.entrypoints.openai.api_server $MODEL_ARGS $COMMON_ARGS"
+echo "Starting vLLM server on port $PORT with: $CMD"
+$CMD
