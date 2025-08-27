@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks start_vllm.sh"
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v4"
+echo "Script Version: 2025-01-27-v5"
 echo "=================================="
 echo
 
@@ -105,22 +105,26 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 
 # Install vLLM requirements
-wget -O vllm_requirements_common.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/common.txt
-uv pip install -r vllm_requirements_common.txt
+# Download with original names to preserve relative path references between files
+wget -O common.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/common.txt
+uv pip install -r common.txt
 
-# If Darwin then install cpu.txt
+# Platform-specific requirements
 if [[ "$(uname)" == "Darwin" ]]; then
-    wget -O vllm_requirements_cpu.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cpu.txt
-    uv pip install -r vllm_requirements_cpu.txt
+    # macOS - CPU only
+    wget -O cpu.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cpu.txt
+    uv pip install -r cpu.txt
 else
-    wget -O vllm_requirements_cuda.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cuda.txt
-    uv pip install -r vllm_requirements_cuda.txt
-fi
-
-# If rocm-smi exists, install rocm-torch
-if command -v rocm-smi &> /dev/null; then
-    wget -O vllm_requirements_rocm.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/rocm.txt
-    uv pip install -r vllm_requirements_rocm.txt
+    # Linux - check for CUDA or ROCm
+    if command -v rocm-smi &> /dev/null; then
+        # ROCm/AMD GPU
+        wget -O rocm.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/rocm.txt
+        uv pip install -r rocm.txt
+    else
+        # CUDA/NVIDIA GPU (default)
+        wget -O cuda.txt https://raw.githubusercontent.com/vllm-project/vllm/refs/tags/${VLLM_VERSION}/requirements/cuda.txt
+        uv pip install -r cuda.txt
+    fi
 fi
 
 # Transformers with vLLM 0.9.2

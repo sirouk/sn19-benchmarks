@@ -1,4 +1,8 @@
 .venv/
-vllm_requirements.txt
+common.txt
+cpu.txt
+cuda.txt
+rocm.txt
+vllm_requirements*.txt
 **/*.pyc
 .env
