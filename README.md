@@ -2,10 +2,26 @@
 
 Simple tools for starting and benchmarking vLLM inference servers with true async concurrency testing.
 
+## TL;DR - Fastest Setup
+
+```bash
+# Start a vLLM server (prompts for settings)
+bash <(curl -s https://raw.githubusercontent.com/sirouk/sn19-benchmarks/refs/heads/main/start_vllm.sh)
+
+# In another terminal, benchmark it
+git clone https://github.com/sirouk/sn19-benchmarks && cd sn19-benchmarks && ./bench_vllm.sh
+```
+
 ## Quick Start
 
 ### 1. Start a vLLM Server
 
+#### One-liner Installation & Start
+```bash
+bash <(curl -s https://raw.githubusercontent.com/sirouk/sn19-benchmarks/refs/heads/main/start_vllm.sh)
+```
+
+#### Or run locally if already cloned:
 ```bash
 ./start_vllm.sh
 ```
@@ -21,16 +37,26 @@ The script will prompt you for:
   4. deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
   5. unsloth/Llama-3.2-3B-Instruct (default)
 - **Memory percentage** (defaults to 0.97)
+- **Tensor parallel size** (defaults to 1) - for multi-GPU setups
 
 The script will:
-- Set up a Python 3.12 virtual environment
-- Install vLLM and dependencies
-- Start the server with optimized settings
+- Clone/update the sn19-benchmarks repository
+- Set up a fresh Python 3.12 virtual environment using `uv`
+- Install vLLM and dependencies (auto-detecting CUDA architecture)
+- Configure platform-specific settings (GPU/CPU mode)
+- Start the server with optimized settings (float16 precision)
 
 ### 2. Benchmark the Server
 
 Once your vLLM server is running, benchmark it:
 
+#### Quick setup & run benchmark:
+```bash
+# Clone and run benchmark (if not already cloned)
+git clone https://github.com/sirouk/sn19-benchmarks && cd sn19-benchmarks && ./bench_vllm.sh
+```
+
+#### Or if already in the sn19-benchmarks directory:
 ```bash
 # Interactive mode - will prompt for server selection if multiple are running
 ./bench_vllm.sh
@@ -98,10 +124,17 @@ pip install aiohttp
 
 ## Notes
 
+### Benchmarking
 - The benchmark creates a single Python process with async I/O for true concurrency testing
 - Connection pooling is used to efficiently reuse HTTP connections
 - Results show both individual run statistics and aggregated metrics
 - Press 'y' after each benchmark to run again, or 'N' to exit
+
+### Server Configuration
+- **Multi-GPU**: Set tensor parallel size > 1 to distribute model across GPUs
+- **Memory**: 0.97 (97%) is recommended for dedicated inference servers
+- **Platform detection**: Automatically configures for Mac (Metal) or Linux (CUDA)
+- **CUDA optimization**: Auto-detects compute capability for optimal torch backend
 
 ## Troubleshooting
 
