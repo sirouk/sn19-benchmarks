@@ -2,12 +2,14 @@
 
 Simple tools for starting and benchmarking vLLM inference servers with true async concurrency testing.
 
-## TL;DR
+## TLDR;
 
 ```bash
 # Terminal 1: Start a vLLM server
 bash <(curl -s https://raw.githubusercontent.com/sirouk/sn19-benchmarks/refs/heads/main/start_vllm.sh)
+```
 
+```bash
 # Terminal 2: Benchmark it
 bash <(curl -s https://raw.githubusercontent.com/sirouk/sn19-benchmarks/refs/heads/main/bench_vllm.sh)
 ```
