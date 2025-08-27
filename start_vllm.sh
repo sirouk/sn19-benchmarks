@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Display version info
+echo "=================================="
+echo "sn19-benchmarks start_vllm.sh"
+echo "Repo: https://github.com/sirouk/sn19-benchmarks"
+echo "Script Version: 2025-01-27-v2"
+echo "=================================="
+echo
+
 # First and foremost, prompt before doing any work!
 
 # Prompt the user for their Hugging Face token
@@ -40,9 +48,14 @@ if [ -d sn19-benchmarks ]; then
     cd ./sn19-benchmarks
     git pull
 else
-git clone https://github.com/sirouk/sn19-benchmarks
+    git clone https://github.com/sirouk/sn19-benchmarks
     cd ./sn19-benchmarks
 fi
+
+# Show current git commit for verification
+echo "Current git commit: $(git rev-parse --short HEAD)"
+echo "Commit date: $(git log -1 --format=%ci)"
+echo
 
 # keep it fresh
 rm -rf .venv

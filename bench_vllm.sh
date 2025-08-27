@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# Display version info
+echo "=================================="
+echo "sn19-benchmarks bench_vllm.sh"  
+echo "Repo: https://github.com/sirouk/sn19-benchmarks"
+echo "Script Version: 2025-01-27-v2"
+echo "=================================="
+echo
+
 # vLLM Benchmark Script with true async concurrency
 # Can be run via curl or locally
 # Usage: 
@@ -30,6 +38,11 @@ setup_environment() {
         git clone https://github.com/sirouk/sn19-benchmarks
         cd ./sn19-benchmarks
     fi
+    
+    # Show current git commit for verification
+    echo "Current git commit: $(git rev-parse --short HEAD)"
+    echo "Commit date: $(git log -1 --format=%ci)"
+    echo
     
     # Check if venv exists and has aiohttp
     if [[ -f .venv/bin/activate ]]; then
