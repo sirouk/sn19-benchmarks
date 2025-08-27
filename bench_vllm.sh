@@ -4,7 +4,7 @@
 echo "=================================="
 echo "sn19-benchmarks bench_vllm.sh"  
 echo "Repo: https://github.com/sirouk/sn19-benchmarks"
-echo "Script Version: 2025-01-27-v3"
+echo "Script Version: 2025-01-27-v4"
 echo "=================================="
 echo
 
@@ -334,4 +334,4 @@ EOF
 
 echo
 read -n1 -rsp "Run again? [y/N] " ans; echo
-[[ \$ans == [yY] ]] && exec "\$0" "\$@"
+[[ $ans == [yY] ]] && exec "$0" "$@"
